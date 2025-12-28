@@ -17,7 +17,7 @@ class order_tableController extends Controller
 {
         public function indexOrder(){
             $order=DB::table('orderdts')
-            ->leftJoin('order_tables','order_tables.order_id','=','Orderdts.order_id')
+            ->leftJoin('order_tables','order_tables.order_id','=','orderdts.order_id')
             ->leftJoin('payments','payments.order_id','=','order_tables.order_id')
             ->select('orderdts.orderdt_id','orderdts.order_id','order_tables.fullname','order_tables.final_total','payments.status')
             ->orderBy('order_tables.order_id','desc')
