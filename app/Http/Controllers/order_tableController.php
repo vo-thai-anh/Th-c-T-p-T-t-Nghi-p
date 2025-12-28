@@ -11,6 +11,7 @@ use App\Models\Orderdt;
 use Illuminate\Support\Facades\DB;
 use App\Models\Cartitem;
 use App\Models\Payment;
+use Exception;
 
 class order_tableController extends Controller
 {
@@ -18,78 +19,141 @@ class order_tableController extends Controller
             $order=DB::table('orderdts')
             ->leftJoin('order_tables','order_tables.order_id','=','Orderdts.order_id')
             ->leftJoin('payments','payments.order_id','=','order_tables.order_id')
-            ->select('orderdts.order_id','order_tables.fullname','order_tables.final_total','payments.status')
+            ->select('orderdts.orderdt_id','orderdts.order_id','order_tables.fullname','order_tables.final_total','payments.status')
             ->orderBy('order_tables.order_id','desc')
-            ->paginate(10);
+            ->get();
             return view('admin.indexOrder',compact('order'));
         }
+        public function detailorder(string $id)
+        {
+            $details = DB::table('orderdts')
+                ->join('order_tables', 'order_tables.order_id', '=', 'orderdts.order_id')
+                ->leftJoin('payments', 'payments.order_id', '=', 'order_tables.order_id')
+                ->where('order_tables.order_id', $id)
+                ->select(
+                    'order_tables.order_id',
+                    'order_tables.fullname',
+                    'orderdts.name',
+                    'order_tables.phone',
+                    'order_tables.address',
+                    'order_tables.shipping_fee',
+                    'order_tables.final_total',
+                    'order_tables.note',
+                    'order_tables.method_pay',
+                    'payments.status',
+                    'orderdts.quantity',
+                    'orderdts.price'
+                )
+                ->get();
+
+            return view('admin.detailOrder', compact('details'));
+        }
+    
+    public function deleteorder(string $id)
+    {
+        DB::beginTransaction();
+        try {
+            // Xóa payment
+            Payment::where('order_id', $id)->delete();
+
+            // Xóa chi tiết đơn hàng
+            Orderdt::where('order_id', $id)->delete();
+
+            // Xóa đơn hàng
+            Order_table::where('order_id', $id)->delete();
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Xóa đơn hàng thành công');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Không thể xóa đơn hàng');
+        }
+    }
+
+
     protected function getOrCreateCartId()
     {
         $userId = Auth::id();
         $cart = Cart::firstOrCreate(['user_id' => $userId]);
         return $cart->cart_id;
     }
-    public function pt(){
-        return view('order_table.phuongthucthanhtoan');
-    }
-    public function thanhtoan(Request $request){
+    public function thanhtoan(Request $request)
+    {
         DB::beginTransaction();
-        try{
-            $userid = Auth::id();
-            $cart_id=$this->getOrCreateCartId();
-            $items = Cartitem::where('cart_id',$cart_id)->get();
-            if($items->isEmpty()){
-                return back()->with('error','gio hang rong ');
+        try {
+            $userId = Auth::id();
+            $cartId = $this->getOrCreateCartId();
+            $items = Cartitem::where('cart_id', $cartId)->get();
+
+            if ($items->isEmpty()) {
+                return back()->with('error', 'Giỏ hàng rỗng');
             }
-            foreach($items as $item){
-                $stock = Stock::where('product_id', $item->product_id)->lockForUpdate()->first();
+
+            foreach ($items as $item) {
+                $stock = Stock::where('product_id', $item->product_id)
+                    ->lockForUpdate()->first();
+
                 if (!$stock || $stock->quantity < $item->quantity) {
-                DB::rollBack();
-                return back()->with('error',
-                    'Sản phẩm "' . $item->name_product . '" không đủ hàng'
-                );
+                    DB::rollBack();
+                    return back()->with(
+                        'error',
+                        'Sản phẩm ' . $item->name_product . ' không đủ hàng'
+                    );
+                }
             }
-            }
-            $order=Order_table::create([
-                'user_id'=>$userid,
-                'total_amount'=>$request->total_amount,
-                'shipping_fee'=>$request->shipping_fee,
-                'final_total'=>$request->final_total,
-                'status'=>'pending',
-                'fullname'=>$request->fullname,
-                'phone'=>$request->phone,
-                'address'=> $request->address,
-                'note'=> $request->note,
-                'method_pay'=> $request->method_pay,
+
+            $order = Order_table::create([
+                'user_id' => $userId,
+                'total_amount' => $request->total_amount,
+                'shipping_fee' => $request->shipping_fee,
+                'final_total' => $request->final_total,
+                'status' => 'pending',
+                'fullname' => $request->fullname,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'note' => $request->note,
+                'method_pay' => $request->method_pay,
             ]);
-            foreach($items as $item)
-                { Orderdt::create([
-                'order_id'=> $order->order_id,
-                'product_id'=>$item->product_id,
-                'name'=>$item->name_product,
-                'quantity'=> $item->quantity,
-                'price'=> $item->price,
-            ]);
-            Stock::where('product_id', $item->product_id)
-            ->decrement('quantity', $item->quantity);
-            }
-                Payment::create([
-                    'order_id'=> $order->order_id,
-                    'user_id'=>$userid,
-                    'amount'=>$request->total_amount,
-                    'payment_method'=>$request->method_pay,
-                    'status'=>$request->method_pay == 'Bank Transfer'?'da thanh toan ': 'chua thanh toan',
+
+            foreach ($items as $item) {
+                Orderdt::create([
+                    'order_id' => $order->order_id,
+                    'product_id' => $item->product_id,
+                    'name' => $item->name_product,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
                 ]);
-            
-            Cartitem::where('cart_id',$cart_id)->delete();
+
+                Stock::where('product_id', $item->product_id)
+                    ->decrement('quantity', $item->quantity);
+            }
+
+            Payment::create([
+                'order_id' => $order->order_id,
+                'user_id' => $userId,
+                'amount' => $request->final_total,
+                'payment_method' => $request->method_pay,
+                'status' => 'unpaid',
+            ]);
+
+            Cartitem::where('cart_id', $cartId)->delete();
             DB::commit();
-            return redirect()->route('cartitems')->with('success','dat haang thanh cong');
-        }
-        catch(\Exception $e){
+
+            if ($request->method_pay == 'Bank Transfer') {
+                return redirect()->route('payment.qrbank', $order->order_id);
+            }
+
+            return redirect()->route('cartitems')
+                ->with('success', 'Đặt hàng thành công');
+
+        } catch (Exception $e) {
             DB::rollBack();
-            return back()->with('error','loi he thong'.$e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
+
+
     public function formthanhtoan()
     {
         //lấy user id

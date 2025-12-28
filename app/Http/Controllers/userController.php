@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
+use App\Models\Order_table;
+use App\Models\Orderdt;
+use App\Models\Payment;
 use Exception;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Termwind\Components\Raw;
 
 class userController extends Controller
 {
@@ -24,7 +28,7 @@ class userController extends Controller
 
     public function indexUser(){
         $user = DB::table('users')
-            ->select('user_id','username','email','role')
+            ->select('user_id','username','phone_number','email','role')
             ->orderBy('user_id','desc')
             ->paginate(10);
             return view('admin.indexUser',compact('user'));
@@ -71,7 +75,7 @@ class userController extends Controller
         if(Auth::attempt($credentials)){
         $user = Auth::user();
         if($user->isadmin()){
-            return redirect('admin/dashboard')->with('success','đăng nhập thành công');
+            return redirect('admin/admin/dashboard')->with('success','đăng nhập thành công');
         }
         return redirect('/')->with('success','đăng nhập thành công ');
     }
@@ -101,6 +105,87 @@ class userController extends Controller
     //         return redirect()->intended('/')->with('success','Đăng nhập thành công');
     //     }
     // }
+    public function deleteuser(string $id)
+    {
+        DB::beginTransaction();
+        try {
+            if (Auth::id() == $id) {
+                return back()->with('error', 'Không thể xóa chính bạn');
+            }
+            $orders = Order_table::where('user_id', $id)->pluck('order_id');
+            
+            Orderdt::whereIn('order_id', $orders)->delete();
+            Payment::whereIn('order_id', $orders)->delete();
+            Order_table::where('user_id', $id)->delete();
+            Cart::where('user_id', $id)->delete();
+            User::where('user_id', $id)->delete();
+            DB::commit();
+            return back()->with('success', 'Xóa người dùng thành công');
 
-    
+        } catch (Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Không thể xóa người dùng: ' . $e->getMessage());
+        }
+    }
+    public function edit(string $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return redirect()->route('admin.user.indexUser')->with('alert', [
+                'type' => 'warning',
+                'title' => 'Không tìm thấy!',
+                'message' => 'User không tồn tại.'
+            ]);
+        }
+        return view('admin.editUser', compact('user'));
+    }
+    public function updateuser(Request $request, string $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return redirect()->back()->with('alert', [
+                'type' => 'warning',
+                'title' => 'Không tìm thấy!',
+                'message' => 'User không tồn tại.'
+            ]);
+        }
+
+        $validated = $request->validate([
+            'username'        => 'nullable|string|max:255',
+            'email'           => 'nullable|email|unique:users,email,' . $user->user_id . ',user_id',
+            'fullname'        => 'nullable|string|max:255',
+            'phone_number'    => 'nullable|string|max:15',
+            'address'         => 'nullable|string|max:255',
+            'role'            => 'nullable|string',
+        ]);
+
+        $user->update([
+            'username'      => $validated['username'] ?? $user->username,
+            'email'         => $validated['email'] ?? $user->email,
+            'fullname'      => $validated['fullname'] ?? $user->fullname,
+            'phone_number'  => $validated['phone_number'] ?? $user->phone_number,
+            'address'       => $validated['address'] ?? $user->address,
+            'role'          => $validated['role'] ?? $user->role,
+        ]);
+
+        if ($user->order_table) {
+            $user->order_table->update([
+                'fullname'  => $validated['fullname'] ?? $user->order_table->fullname,
+                'phone'     => $validated['phone_number'] ?? $user->order_table->phone,
+                'address'   => $validated['address'] ?? $user->order_table->address,
+            ]);
+        }
+
+        return redirect()->route('admin.user.indexUser')->with('alert', [
+            'type' => 'success',
+            'title' => 'Cập nhật thành công!',
+            'message' => 'User đã được cập nhật.'
+        ]);
+    }
+    public function reset(string $id){
+        User::where('user_id', $id)->update([
+        'password' => Hash::make('1')
+    ]);
+    return back()->with('success', 'Đã reset mật khẩu về 1');
+    }
 }

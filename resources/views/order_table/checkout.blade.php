@@ -4,11 +4,16 @@
 <div class="container">
     <div class="checkout-card">
         <h1 class="title">Hoàn Tất Đơn Hàng</h1>
-        @if(session('error'))
+                @if(session('error'))
                         <div class="mb-4 p-4 bg-red-100 text-red-700 rounded">
                             {{ session('error') }}
                         </div>
-                    @endif
+                @endif
+                @if (session('success'))
+                    <div class="bg-green-100 text-green-800 p-3 mb-4 rounded">
+                        {{ session('success') }}
+                    </div>
+                @endif
         <form  action="{{ route('thanhtoan') }}" method="POST">
             @csrf
             <div class="checkout-grid">

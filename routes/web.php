@@ -1,8 +1,12 @@
 <?php
+
+use App\Http\Controllers\adminController;
 use App\Http\Controllers\AuthenticatedSessionController;
 use App\Http\Controllers\cartController;
 use App\Http\Controllers\cartitemController;
 use App\Http\Controllers\order_tableController;
+use App\Http\Controllers\orderdtController;
+use App\Http\Controllers\paymentController;
 use App\Http\Controllers\productController;
 use App\Http\Controllers\userController;
 use Illuminate\Support\Facades\Route;
@@ -44,25 +48,50 @@ Route::middleware(['auth','auth.admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
-    
-    Route::get('/products',                 [productController::class, 'indexProduct'])->name('products.indexProduct');
-    Route::get('/products/create',          [productController::class, 'create'])->name('products.create');
-    Route::post('/products/store',          [productController::class, 'store'])->name('products.store');
-    Route::get('/products/edit/{id}',       [productController::class, 'edit'])->name('products.edit');
-    Route::put('/products/update/{id}',     [productController::class, 'update'])->name('products.update');
-    Route::delete('/products/delete/{id}',  [productController::class, 'delete'])->name('products.delete');
-    Route::get('/order_table',              [Order_tableController::class, 'indexOrder'])->name('products.indexOrder');
-    Route::get('/user',                     [UserController::class, 'indexUser'])->name('products.indexUser');
+
+    Route::get('/admin/dashboard', [adminController::class,'index'])
+    ->name('dashboard');
+    //product
+    Route::post('/admin/payment/verify/{id}',[adminController::class, 'verifyPayment'])->name('admin.payment.verify');
+    Route::get('/products',                     [productController::class, 'indexProduct'])->name('products.indexProduct');
+    Route::get('/products/create',              [productController::class, 'create'])->name('products.create');
+    Route::post('/products/store',              [productController::class, 'store'])->name('products.store');
+    Route::get('/products/edit/{id}',           [productController::class, 'edit'])->name('products.edit');
+    Route::put('/products/update/{id}',         [productController::class, 'update'])->name('products.update');
+    Route::delete('/products/delete/{id}',      [productController::class, 'delete'])->name('products.delete');
+    //order
+    Route::get('/order_table',                  [Order_tableController::class, 'indexOrder'])->name('order.indexOrder');
+    Route::get('//order_details/{id}',          [Order_tableController::class, 'detailorder'])->name('order.detailorder');
+    Route::delete('/order_table/delete/{id}',   [Order_tableController::class, 'deleteorder'])->name('order.deleteorder');
+    //user
+    Route::get('/user',                         [UserController::class, 'indexUser'])->name('user.indexUser');
+    Route::delete('/user/delete/{id}',          [UserController::class, 'deleteuser'])->name('user.deleteuser');
+    Route::get('/user/edit/{id}',               [UserController::class, 'edit'])->name('user.edit');
+    Route::put('/user/update/{id}',             [UserController::class, 'updateuser'])->name('user.updateuser');
+    Route::put('/user/reset/{id}',              [UserController::class, 'reset'])->name('user.reset');
+    //payment
+    Route::get('/payment',                      [paymentController::class, 'indexPayment'])->name('payment.indexPayment');
+    Route::delete('/payment/delete/{id}',       [paymentController::class, 'deletepayment'])->name('payment.deletepayment');
+    //order
+    Route::get('/order_bill',                   [orderdtController::class, 'indexbill'])->name('order.indexbill');
+    Route::delete('/order_bill/delete/{id}',    [orderdtController::class, 'deletebill'])->name('order.deletebill');
+    Route::get('/order_bill/edit/{id}',         [orderdtController::class, 'editBill'])->name('order.editBill');
+    Route::put('/order_bill/update/{id}',       [orderdtController::class, 'updateBill'])->name('order.updateBill');
+
 });
+
 Route::get('/order_table/checkout',[order_tableController::class,'formthanhtoan'])
             ->name('formthanhtoan');
 Route::post('/order_table',[order_tableController::class,'thanhtoan'])
             ->name('thanhtoan');
+Route::get('/payment/qr-bank/{id}', [PaymentController::class, 'qrBank'])
+    ->name('payment.qrbank');
+Route::post('/payment/confirm/{id}', [PaymentController::class, 'confirm'])
+    ->name('payment.confirm');
+
 Route::get('/products/{id}',[productController::class,'show'])->name('detail');
-Route::get('/products',[productController::class,'search'])->name('home');
+
+Route::get('/products',[productController::class,'search'])->name('search');
 
 
 

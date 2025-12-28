@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Orderdt extends Model
 {
     protected $primaryKey = 'orderdt_id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'order_id',
@@ -15,6 +15,8 @@ class Orderdt extends Model
         'name',
         'quantity',
         'price',
+        'created_at',
+        'updated_at	'
     ];
 
     // Mối quan hệ: OrderDT thuộc về Order

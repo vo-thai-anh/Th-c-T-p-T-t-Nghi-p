@@ -38,7 +38,7 @@
                 </ul>
 
         <div class="nav-icons">
-            <form action="{{ route('home') }}" method="GET" class="hidden sm:block">
+            <form action="{{ route('search') }}" method="GET" class="hidden sm:block">
                 <div class="search-box" border="1">
                     <input class="btn btn-danger"
                         type="text"
@@ -50,7 +50,6 @@
                     </button>
                 </div>
             </form>
-            
                 <div class="cart-info">
                     <a href="{{ route('cartitems') }}" > <span>&#x1F6D2;</span> CART </a>
                 </div>

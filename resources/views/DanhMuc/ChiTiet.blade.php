@@ -1,5 +1,19 @@
 @extends('layouts.app')
 @section('content')
+    @if ($errors->any())
+            <div class="bg-red-100 text-red-800 p-3 mb-4 rounded">
+                <ul>
+                    @foreach ($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        @if (session('success'))
+            <div class="bg-green-100 text-green-800 p-3 mb-4 rounded">
+                {{ session('success') }}
+            </div>
+        @endif
 <section class="product-detail container">
     <div class="product-main-content">
         <div class="product-gallery">

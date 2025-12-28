@@ -260,3 +260,97 @@
         color: var(--primary-color);
         font-weight: 700;
     }
+    /* ===== SEARCH RESULT PAGE ===== */
+.result-search {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* tiêu đề kết quả */
+.result-search .sear {
+    font-size: 20px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 30px;
+}
+
+.result-search .sear strong {
+    color: #ec4899; /* hồng */
+}
+
+/* grid sản phẩm */
+.result-search .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 28px;
+}
+
+/* card sản phẩm */
+.product-item {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.product-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+}
+
+/* ảnh */
+.product-image-wrapper {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    background: #f9fafb;
+}
+
+.product-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.product-item:hover img {
+    transform: scale(1.08);
+}
+
+/* tên hoa */
+.product-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+/* giá */
+.product-price {
+    font-size: 16px;
+    font-weight: 500;
+    color: #ec4899;
+}
+
+/* khi không có kết quả */
+.result-search .empty {
+    text-align: center;
+    font-size: 18px;
+    color: #6b7280;
+    margin-top: 60px;
+}
+
+/* responsive mobile */
+@media (max-width: 640px) {
+    .result-search .sear {
+        font-size: 18px;
+        text-align: center;
+    }
+}
+

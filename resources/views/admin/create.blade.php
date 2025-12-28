@@ -1,4 +1,4 @@
-@extends('admin.dashboard')
+@extends('admin.admin')
 
 @section('admin_content')
 
@@ -16,6 +16,11 @@
                         <li>{{ $err }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+        @if (session('success'))
+            <div class="bg-green-100 text-green-800 p-3 mb-4 rounded">
+                {{ session('success') }}
             </div>
         @endif
         <label class="block mb-2 font-semibold">Tên hoa</label>
